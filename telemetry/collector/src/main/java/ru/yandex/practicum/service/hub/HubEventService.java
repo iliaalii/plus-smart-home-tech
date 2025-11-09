@@ -2,10 +2,11 @@ package ru.yandex.practicum.service.hub;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.avro.specific.SpecificRecordBase;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.kafka.core.KafkaTemplate;
+
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.kafka.KafkaClient;
 import ru.yandex.practicum.kafka.telemetry.event.*;
 import ru.yandex.practicum.model.hub.*;
 import ru.yandex.practicum.service.EventService;
@@ -16,7 +17,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class HubEventService implements EventService<HubEvent> {
-    private final KafkaTemplate<String, SpecificRecordBase> kafkaTemplate;
+    private final KafkaClient kafkaClient;
 
     @Value("${topics.hub-event}")
     private String topic;
@@ -24,7 +25,7 @@ public class HubEventService implements EventService<HubEvent> {
     @Override
     public void send(HubEvent event) {
         HubEventAvro hubEventAvro = toAvro(event);
-        kafkaTemplate.send(topic, hubEventAvro);
+        kafkaClient.getProducer().send(new ProducerRecord<>(topic, hubEventAvro));
         log.info("Ивент: {}, отправлен в топик: {}", event, topic);
     }
 
@@ -83,7 +84,7 @@ public class HubEventService implements EventService<HubEvent> {
     }
 
     private DeviceActionAvro toDeviceActionAvro(DeviceAction action) {
-        log.info("Перевод типа действия устройства в Avro");
+        log.info("Перевод тип действия устройства в Avro");
         return DeviceActionAvro.newBuilder()
                 .setType(ActionTypeAvro.valueOf(action.getType().name()))
                 .setSensorId(action.getSensorId())
@@ -92,7 +93,7 @@ public class HubEventService implements EventService<HubEvent> {
     }
 
     private ScenarioConditionAvro toScenarioConditionAvro(ScenarioCondition condition) {
-        log.info("Перевод условий сценария в Avro");
+        log.info("Перевод условия сценария в Avro");
         return ScenarioConditionAvro.newBuilder()
                 .setSensorId(condition.getSensorId())
                 .setType(ConditionTypeAvro.valueOf(condition.getType().name()))

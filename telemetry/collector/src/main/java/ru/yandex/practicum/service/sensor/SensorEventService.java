@@ -2,10 +2,10 @@ package ru.yandex.practicum.service.sensor;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.avro.specific.SpecificRecordBase;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.kafka.KafkaClient;
 import ru.yandex.practicum.kafka.telemetry.event.*;
 import ru.yandex.practicum.model.sensor.*;
 import ru.yandex.practicum.service.EventService;
@@ -14,7 +14,7 @@ import ru.yandex.practicum.service.EventService;
 @Service
 @RequiredArgsConstructor
 public class SensorEventService implements EventService<SensorEvent> {
-    private final KafkaTemplate<String, SpecificRecordBase> kafkaTemplate;
+    private final KafkaClient kafkaClient;
 
     @Value("${topics.sensor-event}")
     private String topic;
@@ -22,7 +22,7 @@ public class SensorEventService implements EventService<SensorEvent> {
     @Override
     public void send(SensorEvent event) {
         SensorEventAvro sensorEventAvro = toAvro(event);
-        kafkaTemplate.send(topic, sensorEventAvro);
+        kafkaClient.getProducer().send(new ProducerRecord<>(topic, sensorEventAvro));
         log.info("Ивент: {}, отправлен в топик: {}", event, topic);
     }
 
