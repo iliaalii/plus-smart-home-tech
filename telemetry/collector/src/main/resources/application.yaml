@@ -1,0 +1,9 @@
+kafka:
+  bootstrap-servers: localhost:9092
+  producer:
+    key-serializer: org.apache.kafka.common.serialization.VoidSerializer
+    value-serializer: ru.yandex.practicum.kafka.serializer.GeneralAvroSerializer
+
+topics:
+  sensor-event: telemetry.sensors.v1
+  hub-event: telemetry.hubs.v1
