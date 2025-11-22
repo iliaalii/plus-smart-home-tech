@@ -1,4 +1,4 @@
-package ru.yandex.practicum.service.handler.hub;
+package ru.yandex.practicum.handler.hub;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,7 +12,7 @@ import ru.yandex.practicum.mapper.HubEventMapper;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class DeviceAddedHandler implements HubEventHandler {
+public class ScenarioRemoveHandler implements HubEventHandler {
     private final KafkaClient kafkaClient;
     private final HubEventMapper hubEventMapper;
 
@@ -21,7 +21,7 @@ public class DeviceAddedHandler implements HubEventHandler {
 
     @Override
     public HubEventProto.PayloadCase getMessageType() {
-        return HubEventProto.PayloadCase.DEVICE_ADDED;
+        return HubEventProto.PayloadCase.SCENARIO_REMOVED;
     }
 
     @Override
