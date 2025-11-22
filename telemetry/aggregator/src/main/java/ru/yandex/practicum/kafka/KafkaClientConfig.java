@@ -41,6 +41,8 @@ public class KafkaClientConfig {
                 if (producer == null) {
                     initProducer();
                 }
+                System.out.println("Trying to connect to Kafka at " + bootstrapServers);
+
                 return producer;
             }
 
@@ -64,6 +66,8 @@ public class KafkaClientConfig {
                 if (consumer == null) {
                     initConsumer();
                 }
+                System.out.println("Trying to connect to Kafka at " + bootstrapServers);
+
                 return consumer;
             }
 

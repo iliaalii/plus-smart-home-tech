@@ -7,8 +7,8 @@ import io.grpc.stub.StreamObserver;
 import net.devh.boot.grpc.server.service.GrpcService;
 import ru.yandex.practicum.grpc.telemetry.event.HubEventProto;
 import ru.yandex.practicum.grpc.telemetry.event.SensorEventProto;
-import ru.yandex.practicum.service.handler.hub.HubEventHandler;
-import ru.yandex.practicum.service.handler.sensor.SensorEventHandler;
+import ru.yandex.practicum.handler.hub.HubEventHandler;
+import ru.yandex.practicum.handler.sensor.SensorEventHandler;
 import ru.yandex.practicum.grpc.telemetry.collector.CollectorControllerGrpc;
 
 import java.util.Map;

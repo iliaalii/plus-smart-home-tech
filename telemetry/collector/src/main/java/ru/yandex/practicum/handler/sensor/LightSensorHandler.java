@@ -1,4 +1,4 @@
-package ru.yandex.practicum.service.handler.sensor;
+package ru.yandex.practicum.handler.sensor;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,7 +12,7 @@ import ru.yandex.practicum.mapper.SensorEventMapper;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class SwitchSensorHandler implements SensorEventHandler {
+public class LightSensorHandler implements SensorEventHandler {
     private final KafkaClient kafkaClient;
     private final SensorEventMapper sensorEventMapper;
 
@@ -21,7 +21,7 @@ public class SwitchSensorHandler implements SensorEventHandler {
 
     @Override
     public SensorEventProto.PayloadCase getMessageType() {
-        return SensorEventProto.PayloadCase.SWITCH_SENSOR;
+        return SensorEventProto.PayloadCase.LIGHT_SENSOR;
     }
 
     @Override
