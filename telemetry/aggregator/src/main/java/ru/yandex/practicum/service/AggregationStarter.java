@@ -24,9 +24,9 @@ public class AggregationStarter {
     private final SensorSnapshotService snapshotService;
     private static final Map<TopicPartition, OffsetAndMetadata> currentOffsets = new HashMap<>();
     @Value("${topics.sensor-event}")
-    String sensorTopic;
+    private String sensorTopic;
     @Value("${topics.snapshots}")
-    String snapshotTopic;
+    private String snapshotTopic;
 
     public void start() {
         log.info("Старт");
