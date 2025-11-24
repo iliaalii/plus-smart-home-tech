@@ -18,7 +18,7 @@ import java.util.Properties;
 public class KafkaClientConfig {
 
     @Bean
-    KafkaClient getClient() {
+    public KafkaClient getClient() {
         return new KafkaClient() {
             @Value("${kafka.bootstrap-servers}")
             private String bootstrapServers;

@@ -14,7 +14,11 @@ import ru.yandex.practicum.repository.ConditionRepository;
 import ru.yandex.practicum.repository.ScenarioRepository;
 import ru.yandex.practicum.repository.SensorRepository;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -56,45 +60,73 @@ public class HubEventService {
         scenarioRepository.save(scenario);
         log.debug("Сценарий '{}' создан в базе", event.getName());
 
-        for (ScenarioConditionAvro conditionAvro : event.getConditions()) {
-            sensorRepository.findById(conditionAvro.getSensorId()).ifPresent(sensor -> {
-                Condition condition = new Condition();
-                condition.setScenario(scenario);
-                condition.setSensor(sensor);
-                condition.setType(conditionAvro.getType());
-                condition.setOperation(conditionAvro.getOperation());
-                if (conditionAvro.getValue() instanceof Integer intVal) {
-                    condition.setIntValue(intVal);
-                } else if (conditionAvro.getValue() instanceof Boolean boolVal) {
-                    condition.setIntValue(boolVal ? 1 : 0);
-                }
-                conditionRepository.save(condition);
-            });
+        List<String> sensorIds = new ArrayList<>();
+        event.getConditions().forEach(condition -> sensorIds.add(condition.getSensorId()));
+        event.getActions().forEach(action -> sensorIds.add(action.getSensorId()));
+
+        Map<String, Sensor> sensors = sensorRepository
+                .findAllById(sensorIds)
+                .stream()
+                .collect(Collectors.toMap(Sensor::getId, s -> s));
+
+        for (ScenarioConditionAvro c : event.getConditions()) {
+            Sensor sensor = sensors.get(c.getSensorId());
+            if (sensor == null) {
+                log.warn("Сенсор {} отсутствует, условие пропущено", c.getSensorId());
+                continue;
+            }
+
+            Condition condition = new Condition();
+            condition.setScenario(scenario);
+            condition.setSensor(sensor);
+            condition.setType(c.getType());
+            condition.setOperation(c.getOperation());
+
+            if (c.getValue() instanceof Integer i) {
+                condition.setIntValue(i);
+            } else if (c.getValue() instanceof Boolean b) {
+                condition.setIntValue(b ? 1 : 0);
+            }
+
+            conditionRepository.save(condition);
         }
 
-        for (DeviceActionAvro actionAvro : event.getActions()) {
-            sensorRepository.findById(actionAvro.getSensorId()).ifPresent(sensor -> {
-                Action action = new Action();
-                action.setScenario(scenario);
-                action.setSensor(sensor);
-                action.setType(actionAvro.getType());
-                if (actionAvro.getValue() != null) {
-                    action.setValue(actionAvro.getValue());
-                }
-                actionRepository.save(action);
-            });
+        for (DeviceActionAvro a : event.getActions()) {
+            Sensor sensor = sensors.get(a.getSensorId());
+            if (sensor == null) {
+                log.warn("Сенсор {} отсутствует, действие пропущено", a.getSensorId());
+                continue;
+            }
+
+            Action action = new Action();
+            action.setScenario(scenario);
+            action.setSensor(sensor);
+            action.setType(a.getType());
+            action.setValue(a.getValue());
+
+            actionRepository.save(action);
         }
+
+        log.info("Сценарий '{}' полностью сохранён", event.getName());
     }
 
     public void scenarioRemoved(String hubId, ScenarioRemovedEventAvro event) {
         log.info("Удаление сценария '{}' из хаба {}", event.getName(), hubId);
-        List<Scenario> scenarios = scenarioRepository.findByHubId(hubId);
-        for (Scenario scenario : scenarios) {
-            if (scenario.getName().equals(event.getName())) {
-                conditionRepository.deleteAllByScenario(scenario);
-                actionRepository.deleteAllByScenario(scenario);
-                scenarioRepository.delete(scenario);
-            }
+
+        Optional<Scenario> optionalScenario =
+                scenarioRepository.findByHubIdAndName(hubId, event.getName());
+
+        if (optionalScenario.isEmpty()) {
+            log.info("Сценарий '{}' не найден", event.getName());
+            return;
         }
+
+        Scenario scenario = optionalScenario.get();
+
+        conditionRepository.deleteAllByScenario(scenario);
+        actionRepository.deleteAllByScenario(scenario);
+        scenarioRepository.delete(scenario);
+
+        log.info("Сценарий '{}' удалён", event.getName());
     }
 }
