@@ -87,7 +87,7 @@ public class WarehouseServiceImpl implements WarehouseService {
                 );
             }
 
-            double productVolume = calculatedVolume(product.getDimension());
+            double productVolume = calculatedVolume(product.getDimension(), productId);
             totalWeight += product.getWeight() * quantityRequested;
             totalVolume += productVolume * quantityRequested;
 
@@ -125,8 +125,8 @@ public class WarehouseServiceImpl implements WarehouseService {
         );
     }
 
-    private double calculatedVolume(Dimension dimension) {
-        log.info("Расчет объема продукта");
+    private double calculatedVolume(Dimension dimension, UUID productId) {
+        log.info("Расчет объема продукта (id): {}", productId);
         return dimension.getWidth() * dimension.getHeight() * dimension.getDepth();
     }
 }
