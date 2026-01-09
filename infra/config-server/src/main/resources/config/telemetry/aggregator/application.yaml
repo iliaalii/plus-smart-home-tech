@@ -1,0 +1,17 @@
+kafka:
+  bootstrap-servers: localhost:9092
+  producer:
+    key-serializer: org.apache.kafka.common.serialization.VoidSerializer
+    value-serializer: ru.yandex.practicum.kafka.serializer.GeneralAvroSerializer
+  consumer:
+    key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    value-deserializer: ru.yandex.practicum.kafka.serializer.SensorEventDeserializer
+    group-id: aggregator
+
+topics:
+  sensor-event: telemetry.sensors.v1
+  snapshots: telemetry.snapshots.v1
+
+grpc:
+  server:
+    port: 59091
