@@ -30,13 +30,13 @@
         <grpc-spring-boot-starter.version>3.1.0.RELEASE</grpc-spring-boot-starter.version>
         <protobuf.version>3.23.4</protobuf.version>
         <grpc.version>1.63.0</grpc.version>
+        <spring-cloud-dependencies.version>2023.0.3</spring-cloud-dependencies.version>
 
         <!--       Plugins       -->
         <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
         <avro-maven-plugin.version>${avro.version}</avro-maven-plugin.version>
         <protobuf-plugin.version>2.4.0</protobuf-plugin.version>
     </properties>
-
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -71,6 +71,13 @@
             </dependency>
 
             <dependency>
+                <groupId>net.devh</groupId>
+                <artifactId>grpc-client-spring-boot-starter</artifactId>
+                <version>${grpc-spring-boot-starter.version}</version>
+                <scope>compile</scope>
+            </dependency>
+
+            <dependency>
                 <groupId>io.grpc</groupId>
                 <artifactId>grpc-stub</artifactId>
                 <version>${grpc.version}</version>
@@ -80,6 +87,14 @@
                 <groupId>io.grpc</groupId>
                 <artifactId>grpc-protobuf</artifactId>
                 <version>${grpc.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud-dependencies.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
 
             <!--    / GRPC dependencies management        -->
@@ -99,6 +114,7 @@
                     <artifactId>avro-maven-plugin</artifactId>
                     <version>${avro-maven-plugin.version}</version>
                 </plugin>
+
                 <plugin>
                     <groupId>io.github.ascopes</groupId>
                     <artifactId>protobuf-maven-plugin</artifactId>

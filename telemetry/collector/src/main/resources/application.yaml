@@ -1,13 +1,15 @@
-kafka:
-  bootstrap-servers: localhost:9092
-  producer:
-    key-serializer: org.apache.kafka.common.serialization.VoidSerializer
-    value-serializer: ru.yandex.practicum.kafka.serializer.GeneralAvroSerializer
+spring:
+  application:
+    name: collector
+  config:
+    import: "configserver:"
+  cloud:
+    config:
+      discovery:
+        enabled: true
+        serviceId: config-server
 
-topics:
-  sensor-event: telemetry.sensors.v1
-  hub-event: telemetry.hubs.v1
-
-grpc:
-  server:
-    port: 59091
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://${eureka.instance.hostname:localhost}:${eureka.instance.port:8761}/eureka/
