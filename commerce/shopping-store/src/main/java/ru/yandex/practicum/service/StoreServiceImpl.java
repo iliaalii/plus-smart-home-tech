@@ -12,7 +12,10 @@ import ru.yandex.practicum.mapper.ProductMapper;
 import ru.yandex.practicum.model.Product;
 import ru.yandex.practicum.repository.ProductRepository;
 
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -82,5 +85,15 @@ public class StoreServiceImpl implements StoreService {
         log.info("Получение продукта по id: {}", productId);
         return mapper.toDto(productRepository.findById(productId)
                 .orElseThrow(() -> new ProductNotFoundException("Продукт не найден")));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Map<UUID, Double> getPrices(Set<UUID> productIds) {
+        return productRepository.findAllById(productIds).stream()
+                .collect(Collectors.toMap(
+                        Product::getProductId,
+                        Product::getPrice
+                ));
     }
 }
