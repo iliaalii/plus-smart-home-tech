@@ -6,6 +6,7 @@ import ru.yandex.practicum.dto.store.ProductDto;
 import ru.yandex.practicum.dto.store.ProductCategory;
 import ru.yandex.practicum.dto.store.QuantityState;
 
+import java.math.BigDecimal;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -23,5 +24,5 @@ public interface StoreService {
 
     ProductDto getProductById(UUID productId);
 
-    Map<UUID, Double> getPrices(Set<UUID> productIds);
+    Map<UUID, BigDecimal> getPrices(Set<UUID> productIds);
 }

@@ -12,6 +12,7 @@ import ru.yandex.practicum.mapper.ProductMapper;
 import ru.yandex.practicum.model.Product;
 import ru.yandex.practicum.repository.ProductRepository;
 
+import java.math.BigDecimal;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -89,7 +90,7 @@ public class StoreServiceImpl implements StoreService {
 
     @Override
     @Transactional(readOnly = true)
-    public Map<UUID, Double> getPrices(Set<UUID> productIds) {
+    public Map<UUID, BigDecimal> getPrices(Set<UUID> productIds) {
         return productRepository.findAllById(productIds).stream()
                 .collect(Collectors.toMap(
                         Product::getProductId,

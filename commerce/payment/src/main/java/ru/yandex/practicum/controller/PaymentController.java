@@ -10,6 +10,7 @@ import ru.yandex.practicum.exception.NotEnoughInfoInOrderToCalculateException;
 import ru.yandex.practicum.feign.PaymentClient;
 import ru.yandex.practicum.service.PaymentService;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @RestController
@@ -25,7 +26,7 @@ public class PaymentController implements PaymentClient {
     }
 
     @Override
-    public Double totalCost(@Valid OrderDto orderDto) {
+    public BigDecimal totalCost(@Valid OrderDto orderDto) {
         validateOrderForCost(orderDto);
         return paymentService.totalCost(orderDto);
     }
@@ -36,7 +37,7 @@ public class PaymentController implements PaymentClient {
     }
 
     @Override
-    public Double productCost(@Valid OrderDto orderDto) {
+    public BigDecimal productCost(@Valid OrderDto orderDto) {
         return paymentService.productCost(orderDto);
     }
 

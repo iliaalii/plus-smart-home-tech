@@ -15,6 +15,7 @@ import ru.yandex.practicum.mapper.PaymentMapper;
 import ru.yandex.practicum.model.Payment;
 import ru.yandex.practicum.repository.PaymentRepository;
 
+import java.math.BigDecimal;
 import java.util.Map;
 import java.util.UUID;
 
@@ -27,7 +28,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentRepository paymentRepository;
     private final PaymentMapper mapper;
 
-    private static final Double fee = 0.1;
+    private static final BigDecimal fee = BigDecimal.valueOf(0.1);
 
     @Override
     @Transactional
@@ -39,7 +40,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .productPrice(orderDto.getProductPrice())
                 .deliveryTotal(orderDto.getDeliveryPrice())
                 .totalPayment(orderDto.getTotalPrice())
-                .feeTotal(orderDto.getTotalPrice() * fee)
+                .feeTotal(orderDto.getTotalPrice().multiply(fee))
                 .paymentStatus(PaymentState.PENDING)
                 .build();
         return mapper.toDto(paymentRepository.save(payment));
@@ -48,9 +49,19 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     @Transactional(readOnly = true)
     //Расчет стоимости заказа
-    public Double totalCost(OrderDto orderDto) {
+    public BigDecimal totalCost(OrderDto orderDto) {
         log.info("Получение полной стоимости платежа по заказу {}", orderDto.getOrderId());
-        return orderDto.getProductPrice() + orderDto.getDeliveryPrice() + orderDto.getProductPrice() * fee;
+
+        BigDecimal productPrice = orderDto.getProductPrice();
+        BigDecimal deliveryPrice = orderDto.getDeliveryPrice();
+        BigDecimal feeAmount = productPrice.multiply(fee);
+
+        BigDecimal total = productPrice
+                .add(deliveryPrice)
+                .add(feeAmount);
+
+        log.info("Полная стоимость платежа: {}", total);
+        return total;
     }
 
     @Override
@@ -67,20 +78,27 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     @Transactional(readOnly = true)
     //Получение стоимости всех товаров
-    public Double productCost(OrderDto orderDto) {
+    public BigDecimal productCost(OrderDto orderDto) {
         log.info("Расчет стоимости продукции по заказу {}", orderDto.getOrderId());
         Map<UUID, Long> products = orderDto.getProducts();
-        Map<UUID, Double> prices = storeClient.getPrices(products.keySet());
-        double total = 0.0;
+        Map<UUID, BigDecimal> prices = storeClient.getPrices(products.keySet());
+        BigDecimal total = BigDecimal.ZERO;
 
         for (Map.Entry<UUID, Long> entry : products.entrySet()) {
-            Double price = prices.get(entry.getKey());
+            BigDecimal price = prices.get(entry.getKey());
             if (price == null) {
-                throw new NotEnoughInfoInOrderToCalculateException("Не найден ценник для продукта: " + entry.getKey());
+                throw new NotEnoughInfoInOrderToCalculateException(
+                        "Не найден ценник для продукта: " + entry.getKey()
+                );
             }
-            total += price * entry.getValue();
+
+            BigDecimal quantity = BigDecimal.valueOf(entry.getValue());
+            BigDecimal itemTotal = price.multiply(quantity);
+
+            total = total.add(itemTotal);
         }
 
+        log.info("Общая стоимость товаров: {}", total);
         return total;
     }
 

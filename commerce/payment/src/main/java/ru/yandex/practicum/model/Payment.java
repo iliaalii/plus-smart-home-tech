@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import ru.yandex.practicum.dto.payment.PaymentState;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Getter
@@ -23,16 +24,16 @@ public class Payment {
     private UUID orderId;
 
     @Column(name = "product_price")
-    private Double productPrice;
+    private BigDecimal productPrice;
 
     @Column(name = "total_payment")
-    private Double totalPayment;
+    private BigDecimal totalPayment;
 
     @Column(name = "delivery_total")
-    private Double deliveryTotal;
+    private BigDecimal deliveryTotal;
 
     @Column(name = "fee_total")
-    private Double feeTotal;
+    private BigDecimal feeTotal;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_state")
