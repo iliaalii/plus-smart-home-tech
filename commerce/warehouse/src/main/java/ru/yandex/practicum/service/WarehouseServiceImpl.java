@@ -5,16 +5,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.dto.cart.ShoppingCartDto;
-import ru.yandex.practicum.dto.warehouse.AddProductToWarehouseRequest;
-import ru.yandex.practicum.dto.warehouse.AddressDto;
-import ru.yandex.practicum.dto.warehouse.BookedProductsDto;
-import ru.yandex.practicum.dto.warehouse.NewProductInWarehouseRequest;
+import ru.yandex.practicum.dto.warehouse.*;
+import ru.yandex.practicum.exception.NoBookingFoundException;
 import ru.yandex.practicum.exception.NoSpecifiedProductInWarehouseException;
 import ru.yandex.practicum.exception.ProductNotFoundException;
 import ru.yandex.practicum.exception.SpecifiedProductAlreadyInWarehouseException;
 import ru.yandex.practicum.mapper.WarehouseMapper;
 import ru.yandex.practicum.model.Dimension;
+import ru.yandex.practicum.model.OrderBooking;
 import ru.yandex.practicum.model.ProductInWarehouse;
+import ru.yandex.practicum.repository.OrderBookingRepository;
 import ru.yandex.practicum.repository.WarehouseRepository;
 
 import java.security.SecureRandom;
@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class WarehouseServiceImpl implements WarehouseService {
     private final WarehouseRepository warehouseRepository;
+    private final OrderBookingRepository orderBookingRepository;
     private final WarehouseMapper mapper;
 
     private static final String[] ADDRESSES = {"ADDRESS_1", "ADDRESS_2"};
@@ -123,6 +124,78 @@ public class WarehouseServiceImpl implements WarehouseService {
                 CURRENT_ADDRESS,
                 CURRENT_ADDRESS
         );
+    }
+
+    @Override
+    @Transactional
+    //передача товаров в доставку
+    public void shipToDelivery(ShippedToDeliveryRequest request) {
+        log.info("Отправка товара в доставку {}, по заказу {}", request.getDeliveryId(), request.getOrderId());
+        OrderBooking orderBooking = orderBookingRepository.findById(request.getOrderId())
+                .orElseThrow(() -> new NoBookingFoundException("Не найден резерв с Id: " + request.getOrderId()));
+
+        orderBooking.setDeliveryId(request.getDeliveryId());
+        orderBookingRepository.save(orderBooking);
+    }
+
+    @Override
+    @Transactional
+    //Возвращаем товар на склад
+    public void acceptReturn(Map<UUID, Long> returnedProducts) {
+        log.info("Возврат продукции по списку: {}", returnedProducts);
+        Map<UUID, ProductInWarehouse> products = warehouseRepository.findAllById(returnedProducts.keySet()).stream()
+                .collect(Collectors.toMap(ProductInWarehouse::getProductId, Function.identity()));
+
+        for (Map.Entry<UUID, Long> entry : returnedProducts.entrySet()) {
+            if (!products.containsKey(entry.getKey())) {
+                throw new ProductNotFoundException("Товар с id = " + entry.getKey() + " не найден на складе");
+            }
+            ProductInWarehouse product = products.get(entry.getKey());
+            log.info("Товара {}, возвращено {}шт.", product.getProductId(), entry.getValue());
+            product.setQuantity(product.getQuantity() + entry.getValue());
+        }
+        warehouseRepository.saveAll(products.values());
+    }
+
+    @Override
+    @Transactional
+    //Резервирование товара на складе
+    public BookedProductsDto assembleProducts(AssemblyProductsForOrderRequest request) {
+        log.info("Подготовка товаров к доставке по заказу {}", request.getOrderId());
+        ShoppingCartDto shoppingCart = ShoppingCartDto.builder()
+                .shoppingCartId(request.getOrderId())
+                .products(request.getProducts())
+                .build();
+
+        BookedProductsDto bookedProductsDto = checkProductQuantity(shoppingCart);
+
+        OrderBooking orderBooking = OrderBooking.builder()
+                .orderId(request.getOrderId())
+                .products(request.getProducts())
+                .build();
+
+        Map<UUID, Long> products = orderBooking.getProducts();
+        List<ProductInWarehouse> productsInWarehouses = warehouseRepository.findAllByProductIdIn(products.keySet());
+
+        if (productsInWarehouses.size() != products.size()) {
+            throw new ProductNotFoundException("Не все товары найдены на складе");
+        }
+
+        for (ProductInWarehouse item : productsInWarehouses) {
+            UUID productId = item.getProductId();
+            Long orderedQuantity = products.get(productId);
+
+            if (item.getQuantity() < orderedQuantity) {
+                throw new ProductNotFoundException("Недостаточно товара на складе: " + productId);
+            }
+
+            item.setQuantity(item.getQuantity() - orderedQuantity);
+        }
+
+        warehouseRepository.saveAll(productsInWarehouses);
+
+        orderBookingRepository.save(orderBooking);
+        return bookedProductsDto;
     }
 
     private double calculatedVolume(Dimension dimension, UUID productId) {
